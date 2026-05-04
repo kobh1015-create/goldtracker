@@ -48,10 +48,10 @@ function StatCard({ icon: Icon, label, value, color, onClick, isActive }) {
 // 카테고리별 리스트
 function CategoryList({ category, hotspots, flyToSpot, closePanel }) {
   const items = useMemo(() => {
-    if (category === 'mines')       return MINES.map(m => ({ key: m.id, name: m.name, sub: `${m.region} · ${m.river}`, lat: m.lat, lng: m.lng, zoom: 12 }))
-    if (category === 'pointBars')   return POINT_BARS.map(p => { const [lat, lng] = centroid(p.coords); return { key: p.id, name: p.name, sub: p.river, lat, lng, zoom: 13 } })
-    if (category === 'confluences') return CONFLUENCES.map(c => ({ key: c.id, name: c.name, sub: c.rivers.join(' + '), lat: c.lat, lng: c.lng, zoom: 13 }))
-    if (category === 'candidates')  return hotspots.map((h, i) => ({ key: h.id, name: h.name, sub: `유망도 ${h.analysis.total}점`, lat: h.lat, lng: h.lng, zoom: 13, score: h.analysis.total, rank: i + 1 }))
+    if (category === 'mines')       return MINES.map(m => ({ key: m.id, name: m.name, sub: m.address, detail: m.river, lat: m.lat, lng: m.lng, zoom: 12 }))
+    if (category === 'pointBars')   return POINT_BARS.map(p => { const [lat, lng] = centroid(p.coords); return { key: p.id, name: p.name, sub: p.address, detail: p.river, lat, lng, zoom: 13 } })
+    if (category === 'confluences') return CONFLUENCES.map(c => ({ key: c.id, name: c.name, sub: c.address, detail: c.rivers.join(' + '), lat: c.lat, lng: c.lng, zoom: 13 }))
+    if (category === 'candidates')  return hotspots.map((h, i) => ({ key: h.id, name: h.name, sub: h.address, detail: `유망도 ${h.analysis.total}점`, lat: h.lat, lng: h.lng, zoom: 13, score: h.analysis.total, rank: i + 1 }))
     return []
   }, [category, hotspots])
 
@@ -70,7 +70,8 @@ function CategoryList({ category, hotspots, flyToSpot, closePanel }) {
             )}
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-white truncate">{item.name}</p>
-              <p className="text-xs truncate" style={{ color: color ?? '#9ca3af' }}>{item.sub}</p>
+              <p className="text-xs text-gray-400 truncate">📍 {item.sub}</p>
+              {item.detail && <p className="text-xs truncate" style={{ color: color ?? '#6b7280' }}>{item.detail}</p>}
             </div>
             {item.score != null && (
               <span className="text-xs font-bold px-1.5 py-0.5 rounded shrink-0"

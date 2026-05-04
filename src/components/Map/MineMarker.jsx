@@ -22,13 +22,11 @@ export default function MineMarker({ mine }) {
       <Popup>
         <div className="min-w-[160px]">
           <p className="font-bold text-amber-800 text-sm">{mine.name}</p>
-          <p className="text-xs text-gray-600 mt-1">📍 {mine.region}</p>
+          <p className="text-xs text-gray-600 mt-1">📍 {mine.address}</p>
+          <p className="text-xs text-gray-500 mt-0.5">🏞 {mine.river}</p>
           {mine.notes && (
-            <p className="text-xs text-gray-500 mt-1">{mine.notes}</p>
+            <p className="text-xs text-gray-500 mt-1 italic">{mine.notes}</p>
           )}
-          <p className="text-xs text-gray-400 mt-2">
-            {mine.lat.toFixed(4)}, {mine.lng.toFixed(4)}
-          </p>
         </div>
       </Popup>
     </Marker>
