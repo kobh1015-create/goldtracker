@@ -1,5 +1,6 @@
 import { useMemo, useState, useRef } from 'react'
-import { Map, Pickaxe, Waves, GitMerge, Star, PlusCircle, BookOpen, BarChart2, X, LogOut, ChevronUp } from 'lucide-react'
+import { Map, Pickaxe, Waves, GitMerge, Star, PlusCircle, BookOpen,
+         BarChart2, X, LogOut, ChevronRight, ChevronDown, ArrowLeft } from 'lucide-react'
 import GoldMap from './components/Map/GoldMap'
 import RecordForm from './components/RecordForm'
 import RecordList from './components/Sidebar/RecordList'
@@ -17,71 +18,162 @@ function LoadingScreen() {
   )
 }
 
-function StatCard({ icon: Icon, label, value, color }) {
+// 폴리라인의 중심 좌표 계산
+function centroid(coords) {
+  const lat = coords.reduce((s, c) => s + c[0], 0) / coords.length
+  const lng = coords.reduce((s, c) => s + c[1], 0) / coords.length
+  return [lat, lng]
+}
+
+function StatCard({ icon: Icon, label, value, color, onClick, isActive }) {
   return (
-    <div className="bg-gray-700 rounded-lg p-3 flex items-center gap-3">
+    <button
+      onClick={onClick}
+      className={`rounded-lg p-3 flex items-center gap-3 w-full transition-all text-left border ${
+        isActive
+          ? 'border-yellow-500 bg-gray-600'
+          : 'border-transparent bg-gray-700 hover:bg-gray-600'
+      }`}
+    >
       <Icon size={18} color={color} />
-      <div>
+      <div className="flex-1 min-w-0">
         <p className="text-xs text-gray-400">{label}</p>
         <p className="text-lg font-bold" style={{ color }}>{value}</p>
       </div>
+      {isActive ? <ChevronDown size={14} className="text-yellow-400 shrink-0" /> : <ChevronRight size={14} className="text-gray-500 shrink-0" />}
+    </button>
+  )
+}
+
+// 카테고리별 리스트
+function CategoryList({ category, hotspots, flyToSpot, closePanel }) {
+  const items = useMemo(() => {
+    if (category === 'mines')       return MINES.map(m => ({ key: m.id, name: m.name, sub: `${m.region} · ${m.river}`, lat: m.lat, lng: m.lng, zoom: 12 }))
+    if (category === 'pointBars')   return POINT_BARS.map(p => { const [lat, lng] = centroid(p.coords); return { key: p.id, name: p.name, sub: p.river, lat, lng, zoom: 13 } })
+    if (category === 'confluences') return CONFLUENCES.map(c => ({ key: c.id, name: c.name, sub: c.rivers.join(' + '), lat: c.lat, lng: c.lng, zoom: 13 }))
+    if (category === 'candidates')  return hotspots.map((h, i) => ({ key: h.id, name: h.name, sub: `유망도 ${h.analysis.total}점`, lat: h.lat, lng: h.lng, zoom: 13, score: h.analysis.total, rank: i + 1 }))
+    return []
+  }, [category, hotspots])
+
+  return (
+    <div className="flex-1 overflow-y-auto">
+      {items.map((item) => {
+        const color = item.score != null ? gradeColor(item.score) : null
+        return (
+          <button
+            key={item.key}
+            onClick={() => { flyToSpot(item.lat, item.lng, item.zoom); closePanel?.() }}
+            className="w-full text-left px-3 py-2.5 border-b border-gray-700/40 hover:bg-gray-700/50 active:bg-gray-600/50 flex items-center gap-2 transition-colors"
+          >
+            {item.rank && (
+              <span className="text-xs text-gray-500 w-4 shrink-0">{item.rank}</span>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-white truncate">{item.name}</p>
+              <p className="text-xs truncate" style={{ color: color ?? '#9ca3af' }}>{item.sub}</p>
+            </div>
+            {item.score != null && (
+              <span className="text-xs font-bold px-1.5 py-0.5 rounded shrink-0"
+                style={{ backgroundColor: color + '33', color }}>
+                {item.score}
+              </span>
+            )}
+            <ChevronRight size={12} className="text-gray-600 shrink-0" />
+          </button>
+        )
+      })}
     </div>
   )
 }
 
+const CATEGORY_LABELS = {
+  mines:       { label: '폐광산',    icon: Pickaxe,  color: '#fbbf24', count: MINES.length },
+  pointBars:   { label: 'Point Bar', icon: Waves,    color: '#22c55e', count: POINT_BARS.length },
+  confluences: { label: '합류부',    icon: GitMerge, color: '#60a5fa', count: CONFLUENCES.length },
+  candidates:  { label: '분석 스팟', icon: Star,     color: '#f97316', count: CANDIDATES.length },
+}
+
 function SidebarContent({ tab, hotspots, records, deleteRecord, flyToSpot, closePanel }) {
-  if (tab === 'analysis') return (
+  const [expandedCategory, setExpandedCategory] = useState(null)
+
+  const toggle = (cat) => setExpandedCategory(prev => prev === cat ? null : cat)
+
+  if (tab === 'records') return <RecordList records={records} onDelete={deleteRecord} />
+
+  return (
     <>
-      <div className="p-3 grid grid-cols-2 gap-2 border-b border-gray-700">
-        <StatCard icon={Pickaxe}  label="폐광산"    value={MINES.length}       color="#fbbf24" />
-        <StatCard icon={Waves}    label="Point Bar" value={POINT_BARS.length}  color="#22c55e" />
-        <StatCard icon={GitMerge} label="합류부"    value={CONFLUENCES.length} color="#60a5fa" />
-        <StatCard icon={Star}     label="분석 스팟" value={CANDIDATES.length}  color="#f97316" />
+      {/* 통계 카드 4개 */}
+      <div className="p-3 grid grid-cols-2 gap-2 border-b border-gray-700 shrink-0">
+        {Object.entries(CATEGORY_LABELS).map(([key, { label, icon, color, count }]) => (
+          <StatCard key={key} icon={icon} label={label} value={count} color={color}
+            onClick={() => toggle(key)} isActive={expandedCategory === key} />
+        ))}
       </div>
-      <div className="px-3 py-2 border-b border-gray-700">
-        <p className="text-xs font-semibold text-gray-300 uppercase tracking-wider">유망도 순위</p>
-      </div>
-      <div className="flex-1 overflow-y-auto">
-        {hotspots.map((h, i) => {
-          const color = gradeColor(h.analysis.total)
-          return (
-            <div
-              key={h.id}
-              onClick={() => { flyToSpot(h.lat, h.lng); closePanel?.() }}
-              className="px-3 py-2.5 border-b border-gray-700/50 hover:bg-gray-700/40 cursor-pointer active:bg-gray-600/50"
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-500 w-4 shrink-0">{i + 1}</span>
-                <span className="flex-1 text-xs truncate">{h.name}</span>
-                <span className="text-xs font-bold px-1.5 py-0.5 rounded shrink-0"
-                  style={{ backgroundColor: color + '33', color }}>
-                  {h.analysis.total}
-                </span>
-              </div>
-              <div className="ml-6 mt-1 bg-gray-700 rounded-full h-1">
-                <div className="h-1 rounded-full" style={{ width: `${h.analysis.total}%`, backgroundColor: color }} />
-              </div>
-            </div>
-          )
-        })}
-      </div>
-      <div className="p-3 border-t border-gray-700 text-xs text-gray-500 leading-relaxed">
-        <p className="font-semibold text-gray-400 mb-1">점수 산정 기준</p>
-        <p>폐광산(40) + Point Bar(35) + 합류부(15) + 복합보너스(10)</p>
-      </div>
+
+      {/* 카테고리 리스트 */}
+      {expandedCategory ? (
+        <>
+          <div className="px-3 py-2 border-b border-gray-700 flex items-center gap-2 shrink-0">
+            <button onClick={() => setExpandedCategory(null)} className="text-gray-400 hover:text-white">
+              <ArrowLeft size={14} />
+            </button>
+            <p className="text-xs font-semibold text-gray-300">
+              {CATEGORY_LABELS[expandedCategory].label} 목록
+            </p>
+          </div>
+          <CategoryList
+            category={expandedCategory}
+            hotspots={hotspots}
+            flyToSpot={flyToSpot}
+            closePanel={closePanel}
+          />
+        </>
+      ) : (
+        <>
+          {/* 유망도 순위 */}
+          <div className="px-3 py-2 border-b border-gray-700 shrink-0">
+            <p className="text-xs font-semibold text-gray-300 uppercase tracking-wider">유망도 순위</p>
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            {hotspots.map((h, i) => {
+              const color = gradeColor(h.analysis.total)
+              return (
+                <div key={h.id}
+                  onClick={() => { flyToSpot(h.lat, h.lng, 13); closePanel?.() }}
+                  className="px-3 py-2.5 border-b border-gray-700/50 hover:bg-gray-700/40 cursor-pointer active:bg-gray-600/50"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500 w-4 shrink-0">{i + 1}</span>
+                    <span className="flex-1 text-xs truncate">{h.name}</span>
+                    <span className="text-xs font-bold px-1.5 py-0.5 rounded shrink-0"
+                      style={{ backgroundColor: color + '33', color }}>
+                      {h.analysis.total}
+                    </span>
+                  </div>
+                  <div className="ml-6 mt-1 bg-gray-700 rounded-full h-1">
+                    <div className="h-1 rounded-full" style={{ width: `${h.analysis.total}%`, backgroundColor: color }} />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+          <div className="p-3 border-t border-gray-700 text-xs text-gray-500 leading-relaxed shrink-0">
+            <p className="font-semibold text-gray-400 mb-1">점수 산정 기준</p>
+            <p>폐광산(40) + Point Bar(35) + 합류부(15) + 복합보너스(10)</p>
+          </div>
+        </>
+      )}
     </>
   )
-
-  return <RecordList records={records} onDelete={deleteRecord} />
 }
 
 export default function App() {
   const { status, verify, logout } = useAuth()
   const { records, addRecord, deleteRecord } = useRecords()
-  const [pendingPos, setPendingPos] = useState(null)
-  const [addMode, setAddMode]       = useState(false)
-  const [sidebarTab, setSidebarTab] = useState('analysis')
-  const [mobilePanel, setMobilePanel] = useState(null) // null | 'analysis' | 'records'
+  const [pendingPos, setPendingPos]   = useState(null)
+  const [addMode, setAddMode]         = useState(false)
+  const [sidebarTab, setSidebarTab]   = useState('analysis')
+  const [mobilePanel, setMobilePanel] = useState(null)
   const mapRef = useRef(null)
 
   const hotspots = useMemo(() =>
@@ -93,12 +185,13 @@ export default function App() {
   if (status === 'checking')     return <LoadingScreen />
   if (status === 'unauthorized') return <AccessGate onVerify={verify} />
 
-  const flyToSpot = (lat, lng) => mapRef.current?.flyTo([lat, lng], 13, { duration: 1 })
+  const flyToSpot = (lat, lng, zoom = 13) => mapRef.current?.flyTo([lat, lng], zoom, { duration: 1 })
 
-  const handleMapClick = (pos) => { if (!addMode) return; setPendingPos(pos); setAddMode(false) }
+  const handleMapClick   = (pos) => { if (!addMode) return; setPendingPos(pos); setAddMode(false) }
   const handleFormSubmit = (data) => { addRecord(data); setPendingPos(null) }
+  const openMobilePanel  = (tab) => setMobilePanel(prev => prev === tab ? null : tab)
 
-  const openMobilePanel = (tab) => setMobilePanel(prev => prev === tab ? null : tab)
+  const sharedProps = { tab: sidebarTab, hotspots, records, deleteRecord, flyToSpot }
 
   return (
     <div className="flex flex-col h-screen bg-gray-900 text-white">
@@ -109,7 +202,6 @@ export default function App() {
         <button onClick={logout} className="ml-auto text-gray-500 hover:text-gray-300 transition-colors" title="로그아웃">
           <LogOut size={16} />
         </button>
-
         <button
           onClick={() => setAddMode(v => !v)}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
@@ -133,7 +225,7 @@ export default function App() {
 
         {/* 데스크탑 사이드바 */}
         <aside className="w-64 bg-gray-800 border-l border-gray-700 flex-col overflow-hidden shrink-0 hidden lg:flex">
-          <div className="flex border-b border-gray-700">
+          <div className="flex border-b border-gray-700 shrink-0">
             {[{ key: 'analysis', label: '분석', icon: BarChart2 }, { key: 'records', label: `기록 (${records.length})`, icon: BookOpen }]
               .map(({ key, label, icon: Icon }) => (
                 <button key={key} onClick={() => setSidebarTab(key)}
@@ -142,7 +234,7 @@ export default function App() {
                 </button>
               ))}
           </div>
-          <SidebarContent tab={sidebarTab} hotspots={hotspots} records={records} deleteRecord={deleteRecord} flyToSpot={flyToSpot} />
+          <SidebarContent {...sharedProps} />
         </aside>
       </main>
 
@@ -152,9 +244,7 @@ export default function App() {
           .map(({ key, label, icon: Icon }) => (
             <button key={key} onClick={() => openMobilePanel(key)}
               className={`flex-1 flex flex-col items-center justify-center gap-1 py-3 text-xs font-semibold transition-colors ${mobilePanel === key ? 'text-yellow-400' : 'text-gray-400'}`}>
-              <Icon size={18} />
-              <span>{label}</span>
-              {mobilePanel === key && <ChevronUp size={12} className="text-yellow-400" />}
+              <Icon size={18} /><span>{label}</span>
             </button>
           ))}
       </div>
@@ -168,25 +258,16 @@ export default function App() {
               <div className="flex gap-4">
                 {[{ key: 'analysis', label: '분석', icon: BarChart2 }, { key: 'records', label: `기록 (${records.length})`, icon: BookOpen }]
                   .map(({ key, label, icon: Icon }) => (
-                    <button key={key} onClick={() => setMobilePanel(key)}
+                    <button key={key} onClick={() => { setSidebarTab(key); setMobilePanel(key) }}
                       className={`flex items-center gap-1.5 text-sm font-semibold pb-1 border-b-2 transition-colors ${mobilePanel === key ? 'text-yellow-400 border-yellow-400' : 'text-gray-400 border-transparent'}`}>
                       <Icon size={14} />{label}
                     </button>
                   ))}
               </div>
-              <button onClick={() => setMobilePanel(null)} className="text-gray-400 hover:text-white">
-                <X size={20} />
-              </button>
+              <button onClick={() => setMobilePanel(null)} className="text-gray-400 hover:text-white"><X size={20} /></button>
             </div>
             <div className="flex-1 flex flex-col overflow-hidden">
-              <SidebarContent
-                tab={mobilePanel}
-                hotspots={hotspots}
-                records={records}
-                deleteRecord={deleteRecord}
-                flyToSpot={flyToSpot}
-                closePanel={() => setMobilePanel(null)}
-              />
+              <SidebarContent {...sharedProps} tab={mobilePanel} closePanel={() => setMobilePanel(null)} />
             </div>
           </div>
         </>
