@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useRef } from 'react'
 import { Map, Pickaxe, Waves, GitMerge, Star, PlusCircle, BookOpen, BarChart2, X, LogOut } from 'lucide-react'
 import GoldMap from './components/Map/GoldMap'
 import RecordForm from './components/RecordForm'
@@ -35,6 +35,11 @@ export default function App() {
   const [pendingPos, setPendingPos]   = useState(null)
   const [addMode, setAddMode]         = useState(false)
   const [sidebarTab, setSidebarTab]   = useState('analysis')
+  const mapRef = useRef(null)
+
+  const flyToSpot = (lat, lng) => {
+    mapRef.current?.flyTo([lat, lng], 13, { duration: 1 })
+  }
 
   const hotspots = useMemo(() =>
     CANDIDATES
@@ -111,6 +116,7 @@ export default function App() {
             onMapClick={handleMapClick}
             onDeleteRecord={deleteRecord}
             addMode={addMode}
+            mapRef={mapRef}
           />
           {addMode && (
             <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-[1000] bg-yellow-400 text-gray-900 text-xs font-bold px-4 py-2 rounded-full shadow-lg pointer-events-none">
@@ -155,7 +161,7 @@ export default function App() {
                 {hotspots.map((h, i) => {
                   const color = gradeColor(h.analysis.total)
                   return (
-                    <div key={h.id} className="px-3 py-2.5 border-b border-gray-700/50 hover:bg-gray-700/40">
+                    <div key={h.id} onClick={() => { flyToSpot(h.lat, h.lng); }} className="px-3 py-2.5 border-b border-gray-700/50 hover:bg-gray-700/40 cursor-pointer active:bg-gray-600/50">
                       <div className="flex items-center gap-2">
                         <span className="text-xs text-gray-500 w-4 shrink-0">{i + 1}</span>
                         <span className="flex-1 text-xs truncate">{h.name}</span>

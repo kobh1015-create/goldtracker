@@ -21,7 +21,7 @@ L.Icon.Default.mergeOptions({
 
 const { BaseLayer, Overlay } = LayersControl
 
-export default function GoldMap({ records = [], onMapClick, onDeleteRecord, addMode }) {
+export default function GoldMap({ records = [], onMapClick, onDeleteRecord, addMode, mapRef }) {
   return (
     <MapContainer
       center={[36.2, 127.8]}
@@ -29,6 +29,7 @@ export default function GoldMap({ records = [], onMapClick, onDeleteRecord, addM
       zoomControl={false}
       className="w-full h-full"
       style={{ cursor: addMode ? 'crosshair' : 'grab' }}
+      ref={mapRef}
     >
       <ZoomControl position="bottomright" />
       <LocationButton />
