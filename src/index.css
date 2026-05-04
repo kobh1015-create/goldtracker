@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Leaflet 기본 스타일 덮어쓰기 */
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  font-family: inherit;
+}
