@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef } from 'react'
+import { useMemo, useState, useRef, useCallback } from 'react'
 import { Map, Pickaxe, Waves, GitMerge, Star, PlusCircle, BookOpen,
          BarChart2, X, LogOut, ChevronRight, ChevronDown, ArrowLeft } from 'lucide-react'
 import GoldMap from './components/Map/GoldMap'
@@ -9,6 +9,7 @@ import { useAuth } from './hooks/useAuth'
 import { MINES, POINT_BARS, CONFLUENCES, CANDIDATES } from './data/goldData'
 import { scoreLocation, gradeColor } from './utils/goldAnalysis'
 import { useRecords } from './hooks/useRecords'
+import { useBackButton } from './hooks/useBackButton'
 
 function LoadingScreen() {
   return (
@@ -99,6 +100,8 @@ function SidebarContent({ tab, hotspots, records, deleteRecord, flyToSpot, close
 
   const toggle = (cat) => setExpandedCategory(prev => prev === cat ? null : cat)
 
+  useBackButton(!!expandedCategory, useCallback(() => setExpandedCategory(null), []))
+
   if (tab === 'records') return <RecordList records={records} onDelete={deleteRecord} />
 
   return (
@@ -185,6 +188,8 @@ export default function App() {
 
   if (status === 'checking')     return <LoadingScreen />
   if (status === 'unauthorized') return <AccessGate onVerify={verify} />
+
+  useBackButton(!!mobilePanel, useCallback(() => setMobilePanel(null), []))
 
   const flyToSpot = (lat, lng, zoom = 13) => mapRef.current?.flyTo([lat, lng], zoom, { duration: 1 })
 
