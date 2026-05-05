@@ -186,10 +186,10 @@ export default function App() {
       .sort((a, b) => b.analysis.total - a.analysis.total)
   , [])
 
+  useBackButton(!!mobilePanel, useCallback(() => setMobilePanel(null), []))
+
   if (status === 'checking')     return <LoadingScreen />
   if (status === 'unauthorized') return <AccessGate onVerify={verify} />
-
-  useBackButton(!!mobilePanel, useCallback(() => setMobilePanel(null), []))
 
   const flyToSpot = (lat, lng, zoom = 13) => mapRef.current?.flyTo([lat, lng], zoom, { duration: 1 })
 
