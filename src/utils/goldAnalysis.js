@@ -41,12 +41,15 @@ export function scoreLocation(lat, lng, { mines, pointBars, confluences }) {
     if (nearest.dist < 3)       mineScore = 40
     else if (nearest.dist < 8)  mineScore = Math.round(40 - (nearest.dist - 3) / 5 * 25)
     else                        mineScore = Math.round(15 - (nearest.dist - 8) / 7 * 15)
-    mineScore = Math.max(0, mineScore)
+    // 2순위 광산(Cu-Au)은 금 농도가 낮으므로 60% 적용
+    const rankMultiplier = nearest.mine.goldRank === 1 ? 1.0 : 0.6
+    mineScore = Math.max(0, Math.round(mineScore * rankMultiplier))
+    const rankLabel = nearest.mine.goldRank === 1 ? '금 주산물' : '금 부산물'
     breakdown.push({
       factor: '폐광산 근접',
       score: mineScore,
       max: 40,
-      detail: `${nearest.mine.name} (${nearest.dist.toFixed(1)}km)`,
+      detail: `${nearest.mine.name} (${nearest.dist.toFixed(1)}km, ${rankLabel})`,
     })
     total += mineScore
   }
