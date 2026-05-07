@@ -30,17 +30,17 @@ export function scoreLocation(lat, lng, { mines, pointBars, confluences }) {
   let total = 0
 
   // 1. 폐광산 근접도 (max 40pt)
-  // 반경 100km 이내 가장 가까운 폐광산. 20km 미만이면 만점.
+  // 3km 이내 만점, 15km 밖 0점 — 멀수록 금이 희석되므로 가중치 급감
   let mineScore = 0
   let nearest = { mine: null, dist: Infinity }
   for (const mine of mines) {
     const d = haversineKm(lat, lng, mine.lat, mine.lng)
     if (d < nearest.dist) nearest = { mine, dist: d }
   }
-  if (nearest.mine && nearest.dist < 100) {
-    if (nearest.dist < 20)      mineScore = 40
-    else if (nearest.dist < 50) mineScore = Math.round(40 - (nearest.dist - 20) / 30 * 20)
-    else                        mineScore = Math.round(20 - (nearest.dist - 50) / 50 * 15)
+  if (nearest.mine && nearest.dist < 15) {
+    if (nearest.dist < 3)       mineScore = 40
+    else if (nearest.dist < 8)  mineScore = Math.round(40 - (nearest.dist - 3) / 5 * 25)
+    else                        mineScore = Math.round(15 - (nearest.dist - 8) / 7 * 15)
     mineScore = Math.max(0, mineScore)
     breakdown.push({
       factor: '폐광산 근접',
