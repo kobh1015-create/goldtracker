@@ -8,7 +8,7 @@ export default function WishlistPanel({ hotspots, wishlist, flyToSpot, closePane
     return (
       <div className="flex-1 flex flex-col items-center justify-center text-center p-6 text-gray-500">
         <Bookmark size={32} className="mb-2 opacity-30" />
-        <p className="text-sm">탐사 예정 스팟이 없습니다.</p>
+        <p className="text-sm">즐겨찾기한 스팟이 없습니다.</p>
         <p className="text-xs mt-1 text-gray-600">
           분석 탭에서 ☆ 버튼으로 추가하세요
         </p>
@@ -19,7 +19,7 @@ export default function WishlistPanel({ hotspots, wishlist, flyToSpot, closePane
   return (
     <>
       <div className="px-3 py-2 border-b border-gray-700 shrink-0">
-        <p className="text-xs font-semibold text-gray-300">탐사 예정 스팟 ({wishlisted.length})</p>
+        <p className="text-xs font-semibold text-gray-300">즐겨찾기 ({wishlisted.length})</p>
       </div>
       <div className="flex-1 overflow-y-auto divide-y divide-gray-700/50">
         {wishlisted.map((h) => {

@@ -208,7 +208,7 @@ const TABS = [
 
 function tabLabel(key, records, wishlist) {
   if (key === 'records')  return `기록 (${records.length})`
-  if (key === 'wishlist') return `예정 (${wishlist.length})`
+  if (key === 'wishlist') return `즐겨찾기 (${wishlist.length})`
   return '분석'
 }
 
