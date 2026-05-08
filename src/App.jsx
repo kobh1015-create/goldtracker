@@ -129,19 +129,10 @@ function RainfallBadge({ mm, lastRainDate }) {
   if (days === null || mm < 10) {
     return <span className="text-xs text-gray-500">💧 -</span>
   }
-  // 탁류 구간 (0~1일)
-  if (days <= 1) {
-    return <span className="text-xs text-orange-400 font-semibold">⚠️ 탁류</span>
-  }
-  // 최적 구간 (2~4일)
-  if (days <= 4) {
-    return <span className="text-xs text-green-400 font-semibold">✅ {days}일 전</span>
-  }
-  // 양호 구간 (5~10일)
-  if (days <= 10) {
-    return <span className="text-xs text-blue-300">💧 {days}일 전</span>
-  }
-  if (days <= 30) return <span className="text-xs text-gray-500">💧 {days}일 전</span>
+  if (days <= 1)  return <span className="text-xs text-orange-400 font-semibold">⚠️ 탁류 {mm}mm</span>
+  if (days <= 4)  return <span className="text-xs text-green-400 font-semibold">✅ {days}일 전 {mm}mm</span>
+  if (days <= 10) return <span className="text-xs text-blue-300">💧 {days}일 전 {mm}mm</span>
+  if (days <= 30) return <span className="text-xs text-gray-500">💧 {days}일 전 {mm}mm</span>
   return <span className="text-xs text-gray-600">💧 -</span>
 }
 
