@@ -11,6 +11,7 @@ import { MINES, POINT_BARS, CONFLUENCES, CANDIDATES } from './data/goldData'
 import { scoreLocation, gradeColor } from './utils/goldAnalysis'
 import { useRecords } from './hooks/useRecords'
 import { useWishlist } from './hooks/useWishlist'
+import { useRainfall } from './hooks/useRainfall'
 import { useBackButton } from './hooks/useBackButton'
 
 function LoadingScreen() {
@@ -112,7 +113,15 @@ const CATEGORY_LABELS = {
   candidates:  { label: '분석 스팟', icon: Star,     color: '#f97316', count: CANDIDATES.length },
 }
 
-function SidebarContent({ tab, hotspots, records, deleteRecord, editRecord, flyToSpot, closePanel, wishlist }) {
+function RainfallBadge({ mm }) {
+  if (mm == null) return null
+  if (mm === 0)   return <span className="text-xs text-gray-600">💧 0mm</span>
+  if (mm < 20)    return <span className="text-xs text-blue-400">💧 {mm}mm</span>
+  if (mm < 50)    return <span className="text-xs text-blue-300 font-semibold">💧 {mm}mm</span>
+  return              <span className="text-xs text-yellow-400 font-semibold">⚠️ {mm}mm</span>
+}
+
+function SidebarContent({ tab, hotspots, records, deleteRecord, editRecord, flyToSpot, closePanel, wishlist, rainfall }) {
   const [expandedCategory, setExpandedCategory] = useState(null)
 
   const toggle = (cat) => setExpandedCategory(prev => prev === cat ? null : cat)
@@ -167,6 +176,7 @@ function SidebarContent({ tab, hotspots, records, deleteRecord, editRecord, flyT
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-gray-500 w-4 shrink-0">{i + 1}</span>
                       <span className="flex-1 text-xs truncate">{h.name}</span>
+                      <RainfallBadge mm={rainfall?.[h.id]?.total7d} />
                       <span className="text-xs font-bold px-1.5 py-0.5 rounded shrink-0"
                         style={{ backgroundColor: color + '33', color }}>
                         {h.analysis.total}
@@ -215,7 +225,8 @@ function tabLabel(key, records, wishlist) {
 export default function App() {
   const { status, verify, logout } = useAuth()
   const { records, addRecord, updateRecord, deleteRecord } = useRecords()
-  const wishlist = useWishlist()
+  const wishlist  = useWishlist()
+  const rainfall  = useRainfall()
   const [pendingPos, setPendingPos]       = useState(null)
   const [editingRecord, setEditingRecord] = useState(null)
   const [addMode, setAddMode]             = useState(false)
@@ -250,6 +261,7 @@ export default function App() {
     editRecord: handleEditRecord,
     flyToSpot,
     wishlist,
+    rainfall,
   }
 
   return (
