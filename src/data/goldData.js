@@ -1,36 +1,36 @@
-// 출처: 한국대표금광.txt × 한국광해광업공단 CSV 매칭 → Nominatim 지오코딩
+// 출처: 한국대표금광.txt × 한국광해광업공단 CSV × Overpass API(OSM 리 단위 검증)
 // goldRank 1 = 1티어(국가대표급), goldRank 2 = 2티어(지역거점급)
 export const MINES = [
   // ─── 충청권 ─────────────────────────────────────────────────────
-  { id: 1,  goldRank: 1, name: '구봉광산', lat: 36.40607, lng: 126.76368, region: '충남 청양군', river: '구룡천', address: '충남 청양군 남양면 구룡리', notes: '남한 최대 금 생산, 1911~1970' },
-  { id: 2,  goldRank: 1, name: '무극광산', lat: 36.98624, lng: 127.57164, region: '충북 음성군', river: '응천',   address: '충북 음성군 금왕읍 용계리', notes: '국내 2대 금광, 대규모 열수 금맥' },
-  { id: 3,  goldRank: 1, name: '금왕광산', lat: 36.99201, lng: 127.56391, region: '충북 음성군', river: '응천',   address: '충북 음성군 금왕읍 봉곡리', notes: '무극광산 동일 광화대' },
-  { id: 4,  goldRank: 1, name: '은산광산', lat: 36.32541, lng: 126.82736, region: '충남 부여군', river: '은산천', address: '충남 부여군 은산면 합수리',   notes: '고품위 천열수 광상' },
-  { id: 5,  goldRank: 2, name: '직산광산', lat: 36.87810, lng: 127.14897, region: '충남 천안시', river: '입장천', address: '충남 천안시 서북구 직산읍 판정리', notes: '일제강점기 골드러시 지역' },
-  { id: 6,  goldRank: 2, name: '성거광산', lat: 36.86798, lng: 127.13625, region: '충남 천안시', river: '성환천', address: '충남 천안시 서북구 성거읍 천흥리', notes: '직산 일대 금광군' },
-  { id: 7,  goldRank: 2, name: '대흥광산', lat: 36.62683, lng: 126.81703, region: '충남 예산군', river: '무한천', address: '충남 예산군 대흥면',          notes: '가야산 자락 핵심 금맥' },
-  { id: 8,  goldRank: 2, name: '보련광산', lat: 37.05265, lng: 127.74783, region: '충북 충주시', river: '남한강', address: '충북 충주시 노은면 연하리',   notes: '역사적 대형 금광' },
-  { id: 9,  goldRank: 2, name: '영동광산', lat: 36.21639, lng: 127.71029, region: '충북 영동군', river: '초강천', address: '충북 영동군 심천면 초강리',   notes: '옥천대 지질 핵심 금광' },
+  { id: 1,  goldRank: 1, name: '구봉광산', lat: 36.40607, lng: 126.76368, region: '충남 청양군', river: '구룡천', address: '충남 청양군 남양면 구룡리',       notes: '남한 최대 금 생산, 1911~1970' },
+  { id: 2,  goldRank: 1, name: '무극광산', lat: 36.97464, lng: 127.59163, region: '충북 음성군', river: '응천',   address: '충북 음성군 금왕읍 용계리',       notes: '국내 2대 금광, 대규모 열수 금맥' },
+  { id: 3,  goldRank: 1, name: '금왕광산', lat: 36.96277, lng: 127.57713, region: '충북 음성군', river: '응천',   address: '충북 음성군 금왕읍 봉곡리',       notes: '무극광산 동일 광화대' },
+  { id: 4,  goldRank: 1, name: '은산광산', lat: 36.29866, lng: 126.81420, region: '충남 부여군', river: '은산천', address: '충남 부여군 은산면 합수리',       notes: '고품위 천열수 광상' },
+  { id: 5,  goldRank: 2, name: '직산광산', lat: 36.91269, lng: 127.17911, region: '충남 천안시', river: '입장천', address: '충남 천안시 서북구 직산읍 판정리', notes: '일제강점기 골드러시 지역' },
+  { id: 6,  goldRank: 2, name: '성거광산', lat: 36.86651, lng: 127.21782, region: '충남 천안시', river: '성환천', address: '충남 천안시 서북구 성거읍 천흥리', notes: '직산 일대 금광군' },
+  { id: 7,  goldRank: 2, name: '대흥광산', lat: 36.62683, lng: 126.81703, region: '충남 예산군', river: '무한천', address: '충남 예산군 대흥면',             notes: '가야산 자락 핵심 금맥' },
+  { id: 8,  goldRank: 2, name: '보련광산', lat: 37.06029, lng: 127.76218, region: '충북 충주시', river: '남한강', address: '충북 충주시 노은면 연하리',       notes: '역사적 대형 금광' },
+  { id: 9,  goldRank: 2, name: '영동광산', lat: 36.22080, lng: 127.71731, region: '충북 영동군', river: '초강천', address: '충북 영동군 심천면 초강리',       notes: '옥천대 지질 핵심 금광' },
 
   // ─── 강원권 ─────────────────────────────────────────────────────
-  { id: 10, goldRank: 1, name: '대성광산', lat: 37.37962, lng: 128.66180, region: '강원 정선군', river: '조양강', address: '강원 정선군 일대',            notes: '강원 지질대 대표 금광' },
-  { id: 11, goldRank: 1, name: '상동광산', lat: 37.11357, lng: 128.81164, region: '강원 영월군', river: '옥동천', address: '강원 영월군 상동읍 구래리',   notes: '중석 광산 내 대량 금·은 부산물' },
-  { id: 12, goldRank: 2, name: '보배광산', lat: 37.69670, lng: 127.88880, region: '강원 홍천군', river: '홍천강', address: '강원 홍천군 일대',            notes: '영서 지방 대표 금·은 산지' },
-  { id: 13, goldRank: 2, name: '거도광산', lat: 37.16379, lng: 128.98572, region: '강원 태백시', river: '낙동강', address: '강원 태백시 일대',            notes: '다금속 복합 광상, 낙동강 최상류' },
-  { id: 14, goldRank: 2, name: '수광광산', lat: 37.31264, lng: 127.81716, region: '강원 원주시', river: '섬강',   address: '강원 원주시 문막읍 일대',     notes: '문막·신림 일대 금속 공급원' },
+  { id: 10, goldRank: 1, name: '대성광산', lat: 37.37962, lng: 128.66180, region: '강원 정선군', river: '조양강', address: '강원 정선군 일대',               notes: '강원 지질대 대표 금광' },
+  { id: 11, goldRank: 1, name: '상동광산', lat: 37.14512, lng: 128.83848, region: '강원 영월군', river: '옥동천', address: '강원 영월군 상동읍 구래리',       notes: '중석 광산 내 대량 금·은 부산물' },
+  { id: 12, goldRank: 2, name: '보배광산', lat: 37.69670, lng: 127.88880, region: '강원 홍천군', river: '홍천강', address: '강원 홍천군 일대',               notes: '영서 지방 대표 금·은 산지' },
+  { id: 13, goldRank: 2, name: '거도광산', lat: 37.16379, lng: 128.98572, region: '강원 태백시', river: '낙동강', address: '강원 태백시 일대',               notes: '다금속 복합 광상, 낙동강 최상류' },
+  { id: 14, goldRank: 2, name: '수광광산', lat: 37.31264, lng: 127.81716, region: '강원 원주시', river: '섬강',   address: '강원 원주시 문막읍 일대',         notes: '문막·신림 일대 금속 공급원' },
 
   // ─── 경상권 ─────────────────────────────────────────────────────
-  { id: 15, goldRank: 1, name: '금정광산', lat: 36.98307, lng: 128.87495, region: '경북 봉화군', river: '낙동강', address: '경북 봉화군 춘양면 우구치리', notes: '영남 최대 금광, 사금 기원 1순위' },
-  { id: 16, goldRank: 1, name: '달성광산', lat: 35.77781, lng: 128.64767, region: '대구 달성군', river: '신천',   address: '대구 달성군 가창면 상원리',   notes: '대표적 금·동 복합 광산' },
-  { id: 17, goldRank: 2, name: '백화광산', lat: 36.30087, lng: 127.97049, region: '경북 상주시', river: '석천',   address: '경북 상주시 모동면 일대',     notes: '속리산 자락 금·은 광산' },
-  { id: 18, goldRank: 2, name: '거창광산', lat: 35.70024, lng: 127.84848, region: '경남 거창군', river: '황강',   address: '경남 거창군 마리면 월계리',   notes: '영남 지역 대표 거점 금광' },
-  { id: 19, goldRank: 2, name: '쌍전광산', lat: 36.93504, lng: 129.24687, region: '경북 울진군', river: '왕피천', address: '경북 울진군 금강송면 쌍전리', notes: '동해안 급경사 다금속 광상' },
-  { id: 20, goldRank: 2, name: '도산광산', lat: 36.73688, lng: 128.84141, region: '경북 안동시', river: '낙동강', address: '경북 안동시 도산면 일대',     notes: '안동 지역 주요 금광' },
+  { id: 15, goldRank: 1, name: '금정광산', lat: 37.05628, lng: 128.79466, region: '경북 봉화군', river: '낙동강', address: '경북 봉화군 춘양면 우구치리',    notes: '영남 최대 금광, 사금 기원 1순위' },
+  { id: 16, goldRank: 1, name: '달성광산', lat: 35.76773, lng: 128.67500, region: '대구 달성군', river: '신천',   address: '대구 달성군 가창면 상원리',       notes: '대표적 금·동 복합 광산' },
+  { id: 17, goldRank: 2, name: '백화광산', lat: 36.30087, lng: 127.97049, region: '경북 상주시', river: '석천',   address: '경북 상주시 모동면 일대',         notes: '속리산 자락 금·은 광산' },
+  { id: 18, goldRank: 2, name: '거창광산', lat: 35.71934, lng: 127.83728, region: '경남 거창군', river: '황강',   address: '경남 거창군 마리면 월계리',       notes: '영남 지역 대표 거점 금광' },
+  { id: 19, goldRank: 2, name: '쌍전광산', lat: 36.92685, lng: 129.19816, region: '경북 울진군', river: '왕피천', address: '경북 울진군 금강송면 쌍전리',    notes: '동해안 급경사 다금속 광상' },
+  { id: 20, goldRank: 2, name: '도산광산', lat: 36.73688, lng: 128.84141, region: '경북 안동시', river: '낙동강', address: '경북 안동시 도산면 일대',         notes: '안동 지역 주요 금광' },
 
   // ─── 전라권 ─────────────────────────────────────────────────────
-  { id: 21, goldRank: 1, name: '모악광산', lat: 35.71650, lng: 126.99594, region: '전북 김제시', river: '원평천', address: '전북 김제시 금산면 청도리',   notes: '동양 최대 사금지 배후 광산' },
-  { id: 22, goldRank: 2, name: '전신광산', lat: 35.43550, lng: 126.70210, region: '전북 고창군', river: '주진천', address: '전북 고창군 일대',            notes: '호남 지역 주요 금광' },
-  { id: 23, goldRank: 2, name: '광양광산', lat: 34.97325, lng: 127.58101, region: '전남 광양시', river: '섬진강', address: '전남 광양시 광양읍 사곡리',   notes: '다금속 광산의 시초' },
+  { id: 21, goldRank: 1, name: '모악광산', lat: 35.73794, lng: 127.04133, region: '전북 김제시', river: '원평천', address: '전북 김제시 금산면 청도리',       notes: '동양 최대 사금지 배후 광산' },
+  { id: 22, goldRank: 2, name: '전신광산', lat: 35.43550, lng: 126.70210, region: '전북 고창군', river: '주진천', address: '전북 고창군 일대',               notes: '호남 지역 주요 금광' },
+  { id: 23, goldRank: 2, name: '광양광산', lat: 34.95038, lng: 127.62770, region: '전남 광양시', river: '섬진강', address: '전남 광양시 광양읍 사곡리',       notes: '다금속 광산의 시초' },
   { id: 24, goldRank: 2, name: '태인광산', lat: 35.65171, lng: 126.93653, region: '전북 정읍시', river: '동진강', address: '전북 정읍시 태인면 일대',     notes: '김제 지맥 연결 거점' },
 
   // ─── 전라권 추가 ────────────────────────────────────────────────
@@ -44,7 +44,7 @@ export const MINES = [
   { id: 26, goldRank: 2, name: '가평광산',     lat: 37.92665, lng: 127.51093, region: '경기 가평군', river: '가평천', address: '경기 가평군 북면 소법리',     notes: '화악산 자락 핵심 금광' },
   { id: 29, goldRank: 2, name: '영평광산',     lat: 38.01089, lng: 127.21443, region: '경기 포천시', river: '영평천', address: '경기 포천시 영북면 일대',     notes: '수도권 사금 발견 빈도 1위, 노다지 터' },
   { id: 30, goldRank: 2, name: '단월광산',     lat: 37.58765, lng: 127.63640, region: '경기 양평군', river: '흑천',   address: '경기 양평군 단월면 일대',     notes: '수도권 탐사꾼 메카, 지류 합수부 풍부' },
-  { id: 31, goldRank: 2, name: '안성금광면',   lat: 36.98144, lng: 127.33277, region: '경기 안성시', river: '조령천', address: '경기 안성시 금광면 석하리',   notes: '지명에 사금 역사, 금광면(金鑛面)' },
+  { id: 31, goldRank: 2, name: '안성금광면',   lat: 36.95953, lng: 127.31178, region: '경기 안성시', river: '조령천', address: '경기 안성시 금광면 석하리',   notes: '지명에 사금 역사, 금광면(金鑛面)' },
 ]
 
 // 실제 하천 좌표 기반 Point Bar (Nominatim 검색값)
