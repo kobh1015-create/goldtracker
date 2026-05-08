@@ -24,52 +24,62 @@ jobs:
           const SB_URL  = process.env.SUPABASE_URL
           const SB_KEY  = process.env.SUPABASE_SERVICE_KEY
 
-          function dateStr(offset = 0) {
-            const d = new Date()
-            d.setDate(d.getDate() + offset)
-            return d.toISOString().slice(0, 10).replace(/-/g, '')
-          }
-
           function isoDate(offset = 0) {
             const d = new Date()
             d.setDate(d.getDate() + offset)
             return d.toISOString().slice(0, 10)
           }
 
-          function parseDailyRainfall(text) {
-            return text.split('\n')
-              .filter(l => !l.startsWith('#') && l.trim() && !/777/.test(l))
-              .map(line => {
-                const cols = line.split(',')
-                const rn = parseFloat(cols[38])
-                const dateRaw = cols[0]?.trim()
-                if (!dateRaw || dateRaw.length !== 8) return null
-                const iso = `${dateRaw.slice(0,4)}-${dateRaw.slice(4,6)}-${dateRaw.slice(6,8)}`
-                return { date: iso, rn: rn >= 0 ? rn : 0 }
-              })
-              .filter(Boolean)
+          function yyyymmdd(iso) {
+            return iso.replace(/-/g, '')
           }
 
-          async function fetchStation(stn) {
-            const url = `https://apihub.kma.go.kr/api/typ01/url/kma_sfcdd.php?tm1=${dateStr(-30)}&tm2=${dateStr()}&stn=${stn}&authKey=${KMA_KEY}`
-            const res  = await fetch(url)
-            const text = await res.text()
-            const days  = parseDailyRainfall(text)
-            const total = Math.round(days.reduce((s, d) => s + d.rn, 0) * 10) / 10
-            // 마지막으로 5mm 이상 온 날짜
-            const lastRainDay = [...days].reverse().find(d => d.rn >= 5)
-            return { stn, total, lastRainDate: lastRainDay?.date ?? null }
+          function parseRn(text) {
+            const lines = text.split(/\r?\n/).filter(l => !l.startsWith('#') && l.trim() && !/777/.test(l))
+            for (const line of lines) {
+              const cols = line.split(',')
+              if (cols.length < 39) continue
+              const rn = parseFloat(cols[38])
+              if (!isNaN(rn) && rn >= 0) return rn
+            }
+            return 0
+          }
+
+          async function fetchDay(stn, iso) {
+            const url = `https://apihub.kma.go.kr/api/typ01/url/kma_sfcdd.php?tm=${yyyymmdd(iso)}&stn=${stn}&authKey=${KMA_KEY}`
+            try {
+              const res  = await fetch(url)
+              const text = await res.text()
+              return { iso, rn: parseRn(text) }
+            } catch {
+              return { iso, rn: 0 }
+            }
           }
 
           const uniqueStns = [...new Set(Object.values(SPOT_STATION))]
-          const results = await Promise.all(uniqueStns.map(fetchStation))
-          const byStation = Object.fromEntries(results.map(r => [r.stn, r]))
-
           const today = isoDate()
+
+          // 각 관측소별로 최근 21일 데이터 수집
+          const stationData = {}
+          for (const stn of uniqueStns) {
+            const days = []
+            for (let i = 1; i <= 21; i++) {
+              days.push(fetchDay(stn, isoDate(-i)))
+            }
+            const results = await Promise.all(days)
+            const total7d = results.slice(0, 7).reduce((s, d) => s + d.rn, 0)
+            const lastRain = results.find(d => d.rn >= 1)
+            stationData[stn] = {
+              total7d: Math.round(total7d * 10) / 10,
+              lastRainDate: lastRain?.iso ?? null,
+            }
+            console.log(`stn ${stn}: total7d=${stationData[stn].total7d}mm, lastRain=${stationData[stn].lastRainDate}`)
+          }
+
           const rows = Object.entries(SPOT_STATION).map(([spot_id, stn]) => ({
             spot_id,
-            total7d:        byStation[stn]?.total ?? 0,
-            last_rain_date: byStation[stn]?.lastRainDate ?? null,
+            total7d:        stationData[stn]?.total7d ?? 0,
+            last_rain_date: stationData[stn]?.lastRainDate ?? null,
             updated_at:     today,
           }))
 
@@ -83,7 +93,7 @@ jobs:
             },
             body: JSON.stringify(rows),
           })
-          console.log('Supabase upsert:', res.status, await res.text())
+          console.log('Supabase:', res.status)
           EOF
         env:
           KMA_KEY:              ${{ secrets.KMA_KEY }}
