@@ -2,7 +2,7 @@
 // goldRank 1 = 1티어(국가대표급), goldRank 2 = 2티어(지역거점급)
 export const MINES = [
   // ─── 충청권 ─────────────────────────────────────────────────────
-  { id: 1,  goldRank: 1, name: '구봉광산', lat: 36.39536, lng: 126.76786, region: '충남 청양군', river: '구룡천', address: '충남 청양군 남양면 구룡리', notes: '남한 최대 금 생산, 1911~1970' },
+  { id: 1,  goldRank: 1, name: '구봉광산', lat: 36.40607, lng: 126.76368, region: '충남 청양군', river: '구룡천', address: '충남 청양군 남양면 구룡리', notes: '남한 최대 금 생산, 1911~1970' },
   { id: 2,  goldRank: 1, name: '무극광산', lat: 36.98624, lng: 127.57164, region: '충북 음성군', river: '응천',   address: '충북 음성군 금왕읍 용계리', notes: '국내 2대 금광, 대규모 열수 금맥' },
   { id: 3,  goldRank: 1, name: '금왕광산', lat: 36.99201, lng: 127.56391, region: '충북 음성군', river: '응천',   address: '충북 음성군 금왕읍 봉곡리', notes: '무극광산 동일 광화대' },
   { id: 4,  goldRank: 1, name: '은산광산', lat: 36.32541, lng: 126.82736, region: '충남 부여군', river: '은산천', address: '충남 부여군 은산면 합수리',   notes: '고품위 천열수 광상' },
