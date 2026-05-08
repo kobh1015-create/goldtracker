@@ -1,0 +1,78 @@
+name: Update Rainfall Data
+
+on:
+  schedule:
+    - cron: '0 0 * * *'   # 매일 오전 9시 KST
+  workflow_dispatch:        # 수동 실행 버튼
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch KMA & Save to Supabase
+        run: |
+          node << 'EOF'
+          const SPOT_STATION = {
+            hot1:255,hot2:245,hot3:245,hot4:251,hot5:247,hot6:247,hot7:238,hot8:245,
+            hot9:236,hot10:221,hot11:203,hot12:217,hot13:203,hot14:226,hot15:300,
+            hot16:143,hot17:135,hot18:290,hot19:304,hot20:136,hot21:146,hot22:268,
+            hot23:271,hot24:263,hot25:119,hot26:216,hot27:273,hot28:216,hot29:216,
+            hot30:217,hot31:247,
+          }
+
+          const KMA_KEY  = process.env.KMA_KEY
+          const SB_URL   = process.env.SUPABASE_URL
+          const SB_KEY   = process.env.SUPABASE_SERVICE_KEY
+
+          function dateStr(offset = 0) {
+            const d = new Date()
+            d.setDate(d.getDate() + offset)
+            return d.toISOString().slice(0,10).replace(/-/g,'')
+          }
+
+          function parseRainfall(text) {
+            return text.split('\n')
+              .filter(l => !l.startsWith('#') && l.trim() && !/777/.test(l))
+              .map(line => {
+                const cols = line.split(',')
+                const rn = parseFloat(cols[38])
+                return rn >= 0 ? rn : 0
+              })
+              .filter(v => !isNaN(v))
+          }
+
+          async function fetchStation(stn) {
+            const url = `https://apihub.kma.go.kr/api/typ01/url/kma_sfcdd.php?tm1=${dateStr(-7)}&tm2=${dateStr()}&stn=${stn}&authKey=${KMA_KEY}`
+            const res  = await fetch(url)
+            const text = await res.text()
+            const days  = parseRainfall(text)
+            return { stn, total: Math.round(days.reduce((s,v) => s+v, 0) * 10) / 10 }
+          }
+
+          const uniqueStns = [...new Set(Object.values(SPOT_STATION))]
+          const results = await Promise.all(uniqueStns.map(fetchStation))
+          const byStation = Object.fromEntries(results.map(r => [r.stn, r.total]))
+
+          const today = new Date().toISOString().slice(0,10)
+          const rows = Object.entries(SPOT_STATION).map(([spot_id, stn]) => ({
+            spot_id,
+            total7d: byStation[stn] ?? 0,
+            updated_at: today,
+          }))
+
+          const res = await fetch(`${SB_URL}/rest/v1/rainfall`, {
+            method: 'POST',
+            headers: {
+              apikey: SB_KEY,
+              Authorization: `Bearer ${SB_KEY}`,
+              'Content-Type': 'application/json',
+              Prefer: 'resolution=merge-duplicates',
+            },
+            body: JSON.stringify(rows),
+          })
+          console.log('Supabase upsert:', res.status, await res.text())
+          EOF
+        env:
+          KMA_KEY:             ${{ secrets.KMA_KEY }}
+          SUPABASE_URL:        ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
