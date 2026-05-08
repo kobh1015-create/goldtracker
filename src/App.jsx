@@ -113,12 +113,36 @@ const CATEGORY_LABELS = {
   candidates:  { label: '분석 스팟', icon: Star,     color: '#f97316', count: CANDIDATES.length },
 }
 
-function RainfallBadge({ mm }) {
-  if (mm == null) return null
-  if (mm === 0)   return <span className="text-xs text-gray-600">💧 0mm</span>
-  if (mm < 20)    return <span className="text-xs text-blue-400">💧 {mm}mm</span>
-  if (mm < 50)    return <span className="text-xs text-blue-300 font-semibold">💧 {mm}mm</span>
-  return              <span className="text-xs text-yellow-400 font-semibold">⚠️ {mm}mm</span>
+function daysAgo(dateStr) {
+  if (!dateStr) return null
+  const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000)
+  return diff
+}
+
+function RainfallBadge({ mm, lastRainDate }) {
+  const days = daysAgo(lastRainDate)
+
+  if (!mm && days === null) return null
+
+  // 비가 충분하지 않았거나 7일 내 강수 없음
+  if (!mm || mm < 10 || days === null) {
+    return <span className="text-xs text-gray-500">💧 -</span>
+  }
+
+  // 탁류 구간 (0~1일)
+  if (days <= 1) {
+    return <span className="text-xs text-orange-400 font-semibold">⚠️ 탁류</span>
+  }
+  // 최적 구간 (2~4일)
+  if (days <= 4) {
+    return <span className="text-xs text-green-400 font-semibold">✅ {days}일 전</span>
+  }
+  // 양호 구간 (5~10일)
+  if (days <= 10) {
+    return <span className="text-xs text-blue-300">💧 {days}일 전</span>
+  }
+  // 시간 경과
+  return <span className="text-xs text-gray-500">💧 {days}일 전</span>
 }
 
 function SidebarContent({ tab, hotspots, records, deleteRecord, editRecord, flyToSpot, closePanel, wishlist, rainfall }) {
@@ -176,7 +200,7 @@ function SidebarContent({ tab, hotspots, records, deleteRecord, editRecord, flyT
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-gray-500 w-4 shrink-0">{i + 1}</span>
                       <span className="flex-1 text-xs truncate">{h.name}</span>
-                      <RainfallBadge mm={rainfall?.[h.id]?.total7d} />
+                      <RainfallBadge mm={rainfall?.[h.id]?.total7d} lastRainDate={rainfall?.[h.id]?.lastRainDate} />
                       <span className="text-xs font-bold px-1.5 py-0.5 rounded shrink-0"
                         style={{ backgroundColor: color + '33', color }}>
                         {h.analysis.total}

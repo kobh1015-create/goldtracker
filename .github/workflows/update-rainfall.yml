@@ -2,8 +2,8 @@ name: Update Rainfall Data
 
 on:
   schedule:
-    - cron: '0 0 * * *'   # 매일 오전 9시 KST
-  workflow_dispatch:        # 수동 실행 버튼
+    - cron: '0 0 * * *'
+  workflow_dispatch:
 
 jobs:
   update:
@@ -20,44 +20,57 @@ jobs:
             hot30:217,hot31:247,
           }
 
-          const KMA_KEY  = process.env.KMA_KEY
-          const SB_URL   = process.env.SUPABASE_URL
-          const SB_KEY   = process.env.SUPABASE_SERVICE_KEY
+          const KMA_KEY = process.env.KMA_KEY
+          const SB_URL  = process.env.SUPABASE_URL
+          const SB_KEY  = process.env.SUPABASE_SERVICE_KEY
 
           function dateStr(offset = 0) {
             const d = new Date()
             d.setDate(d.getDate() + offset)
-            return d.toISOString().slice(0,10).replace(/-/g,'')
+            return d.toISOString().slice(0, 10).replace(/-/g, '')
           }
 
-          function parseRainfall(text) {
+          function isoDate(offset = 0) {
+            const d = new Date()
+            d.setDate(d.getDate() + offset)
+            return d.toISOString().slice(0, 10)
+          }
+
+          function parseDailyRainfall(text) {
             return text.split('\n')
               .filter(l => !l.startsWith('#') && l.trim() && !/777/.test(l))
               .map(line => {
                 const cols = line.split(',')
                 const rn = parseFloat(cols[38])
-                return rn >= 0 ? rn : 0
+                const dateRaw = cols[0]?.trim()
+                if (!dateRaw || dateRaw.length !== 8) return null
+                const iso = `${dateRaw.slice(0,4)}-${dateRaw.slice(4,6)}-${dateRaw.slice(6,8)}`
+                return { date: iso, rn: rn >= 0 ? rn : 0 }
               })
-              .filter(v => !isNaN(v))
+              .filter(Boolean)
           }
 
           async function fetchStation(stn) {
             const url = `https://apihub.kma.go.kr/api/typ01/url/kma_sfcdd.php?tm1=${dateStr(-7)}&tm2=${dateStr()}&stn=${stn}&authKey=${KMA_KEY}`
             const res  = await fetch(url)
             const text = await res.text()
-            const days  = parseRainfall(text)
-            return { stn, total: Math.round(days.reduce((s,v) => s+v, 0) * 10) / 10 }
+            const days  = parseDailyRainfall(text)
+            const total = Math.round(days.reduce((s, d) => s + d.rn, 0) * 10) / 10
+            // 마지막으로 5mm 이상 온 날짜
+            const lastRainDay = [...days].reverse().find(d => d.rn >= 5)
+            return { stn, total, lastRainDate: lastRainDay?.date ?? null }
           }
 
           const uniqueStns = [...new Set(Object.values(SPOT_STATION))]
           const results = await Promise.all(uniqueStns.map(fetchStation))
-          const byStation = Object.fromEntries(results.map(r => [r.stn, r.total]))
+          const byStation = Object.fromEntries(results.map(r => [r.stn, r]))
 
-          const today = new Date().toISOString().slice(0,10)
+          const today = isoDate()
           const rows = Object.entries(SPOT_STATION).map(([spot_id, stn]) => ({
             spot_id,
-            total7d: byStation[stn] ?? 0,
-            updated_at: today,
+            total7d:        byStation[stn]?.total ?? 0,
+            last_rain_date: byStation[stn]?.lastRainDate ?? null,
+            updated_at:     today,
           }))
 
           const res = await fetch(`${SB_URL}/rest/v1/rainfall`, {
@@ -73,6 +86,6 @@ jobs:
           console.log('Supabase upsert:', res.status, await res.text())
           EOF
         env:
-          KMA_KEY:             ${{ secrets.KMA_KEY }}
-          SUPABASE_URL:        ${{ secrets.SUPABASE_URL }}
+          KMA_KEY:              ${{ secrets.KMA_KEY }}
+          SUPABASE_URL:         ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
