@@ -92,8 +92,8 @@ function CategoryList({ category, hotspots, flyToSpot, closePanel, wishlist }) {
                 className="px-2.5 flex items-center hover:bg-gray-700/50 transition-colors"
               >
                 <Star
-                  size={13}
-                  className={isWishlisted ? 'text-yellow-400' : 'text-gray-600'}
+                  size={14}
+                  className={isWishlisted ? 'text-yellow-400' : 'text-gray-400'}
                   fill={isWishlisted ? 'currentColor' : 'none'}
                 />
               </button>
@@ -181,8 +181,8 @@ function SidebarContent({ tab, hotspots, records, deleteRecord, editRecord, flyT
                     className="px-2.5 flex items-center hover:bg-gray-700/40 transition-colors"
                   >
                     <Star
-                      size={13}
-                      className={isWishlisted ? 'text-yellow-400' : 'text-gray-600'}
+                      size={14}
+                      className={isWishlisted ? 'text-yellow-400' : 'text-gray-400'}
                       fill={isWishlisted ? 'currentColor' : 'none'}
                     />
                   </button>
