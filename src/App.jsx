@@ -122,13 +122,13 @@ function daysAgo(dateStr) {
 function RainfallBadge({ mm, lastRainDate }) {
   const days = daysAgo(lastRainDate)
 
-  if (!mm && days === null) return null
+  // 데이터 미로딩
+  if (mm == null) return null
 
-  // 비가 충분하지 않았거나 7일 내 강수 없음
-  if (!mm || mm < 10 || days === null) {
+  // 7일 내 비 없음
+  if (days === null || mm < 10) {
     return <span className="text-xs text-gray-500">💧 -</span>
   }
-
   // 탁류 구간 (0~1일)
   if (days <= 1) {
     return <span className="text-xs text-orange-400 font-semibold">⚠️ 탁류</span>
@@ -141,7 +141,6 @@ function RainfallBadge({ mm, lastRainDate }) {
   if (days <= 10) {
     return <span className="text-xs text-blue-300">💧 {days}일 전</span>
   }
-  // 시간 경과
   return <span className="text-xs text-gray-500">💧 {days}일 전</span>
 }
 
