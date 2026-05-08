@@ -141,7 +141,8 @@ function RainfallBadge({ mm, lastRainDate }) {
   if (days <= 10) {
     return <span className="text-xs text-blue-300">💧 {days}일 전</span>
   }
-  return <span className="text-xs text-gray-500">💧 {days}일 전</span>
+  if (days <= 30) return <span className="text-xs text-gray-500">💧 {days}일 전</span>
+  return <span className="text-xs text-gray-600">💧 -</span>
 }
 
 function SidebarContent({ tab, hotspots, records, deleteRecord, editRecord, flyToSpot, closePanel, wishlist, rainfall }) {

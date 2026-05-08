@@ -51,7 +51,7 @@ jobs:
           }
 
           async function fetchStation(stn) {
-            const url = `https://apihub.kma.go.kr/api/typ01/url/kma_sfcdd.php?tm1=${dateStr(-7)}&tm2=${dateStr()}&stn=${stn}&authKey=${KMA_KEY}`
+            const url = `https://apihub.kma.go.kr/api/typ01/url/kma_sfcdd.php?tm1=${dateStr(-30)}&tm2=${dateStr()}&stn=${stn}&authKey=${KMA_KEY}`
             const res  = await fetch(url)
             const text = await res.text()
             const days  = parseDailyRainfall(text)
