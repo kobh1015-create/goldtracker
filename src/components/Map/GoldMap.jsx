@@ -21,7 +21,7 @@ L.Icon.Default.mergeOptions({
 
 const { BaseLayer, Overlay } = LayersControl
 
-export default function GoldMap({ records = [], onMapClick, onDeleteRecord, addMode, mapRef }) {
+export default function GoldMap({ records = [], onMapClick, onDeleteRecord, onEditRecord, addMode, mapRef }) {
   return (
     <MapContainer
       center={[36.2, 127.8]}
@@ -100,7 +100,7 @@ export default function GoldMap({ records = [], onMapClick, onDeleteRecord, addM
         <Overlay checked name="내 발견 기록">
           <>
             {records.map((r) => (
-              <RecordMarker key={r.id} record={r} onDelete={onDeleteRecord} />
+              <RecordMarker key={r.id} record={r} onDelete={onDeleteRecord} onEdit={onEditRecord} />
             ))}
           </>
         </Overlay>

@@ -1,7 +1,13 @@
+// Required Supabase Storage:
+// - Create a public bucket named "gold-photos" in the Supabase dashboard
+// - Enable public access on the bucket
+
 import { useState, useRef } from 'react'
 import { X, Camera, Loader } from 'lucide-react'
+import { supabase } from '../lib/supabase'
 
-// 사진을 800px 이하로 압축해서 base64 반환 (localStorage 용량 절약)
+const SESSION_KEY = 'gt_access_code'
+
 function compressImage(file) {
   return new Promise((resolve) => {
     const reader = new FileReader()
@@ -22,16 +28,34 @@ function compressImage(file) {
   })
 }
 
+async function uploadPhoto(base64, recordId) {
+  const code = localStorage.getItem(SESSION_KEY) ?? 'local'
+  const path = `${code}/${recordId}.jpg`
+  const res = await fetch(base64)
+  const blob = await res.blob()
+  const { error } = await supabase.storage
+    .from('gold-photos')
+    .upload(path, blob, { contentType: 'image/jpeg', upsert: true })
+  if (error) {
+    console.error('photo upload:', error)
+    return base64 // fallback: store as base64
+  }
+  const { data: { publicUrl } } = supabase.storage.from('gold-photos').getPublicUrl(path)
+  return publicUrl
+}
+
 const today = () => new Date().toISOString().slice(0, 10)
 
-export default function RecordForm({ position, onSubmit, onClose }) {
-  const [name, setName]       = useState('')
-  const [date, setDate]       = useState(today)
-  const [amount, setAmount]   = useState('')
-  const [unit, setUnit]       = useState('mg')
-  const [notes, setNotes]     = useState('')
-  const [photo, setPhoto]     = useState(null)       // base64
-  const [preview, setPreview] = useState(null)
+export default function RecordForm({ position, onSubmit, onClose, editRecord, onUpdate }) {
+  const isEdit = !!editRecord
+  const [name, setName]     = useState(editRecord?.name ?? '')
+  const [date, setDate]     = useState(editRecord?.date ?? today)
+  const [amount, setAmount] = useState(editRecord?.amount?.toString() ?? '')
+  const [unit, setUnit]     = useState(editRecord?.unit ?? 'mg')
+  const [notes, setNotes]   = useState(editRecord?.notes ?? '')
+  const [photo, setPhoto]   = useState(editRecord?.photo ?? null)
+  const [preview, setPreview] = useState(editRecord?.photo ?? null)
+  const [newPhotoBase64, setNewPhotoBase64] = useState(null)
   const [loading, setLoading] = useState(false)
   const fileRef = useRef()
 
@@ -40,24 +64,41 @@ export default function RecordForm({ position, onSubmit, onClose }) {
     if (!file) return
     setLoading(true)
     const compressed = await compressImage(file)
-    setPhoto(compressed)
+    setNewPhotoBase64(compressed)
     setPreview(compressed)
     setLoading(false)
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (!amount || isNaN(Number(amount))) return
-    onSubmit({
-      name: name.trim() || `${position.lat.toFixed(3)}, ${position.lng.toFixed(3)}`,
+    setLoading(true)
+
+    const recordId = editRecord?.id ?? Date.now().toString()
+    let finalPhoto = photo
+    if (newPhotoBase64) {
+      finalPhoto = await uploadPhoto(newPhotoBase64, recordId)
+    }
+
+    const lat = position?.lat ?? editRecord?.lat
+    const lng = position?.lng ?? editRecord?.lng
+    const data = {
+      name: name.trim() || `${lat.toFixed(3)}, ${lng.toFixed(3)}`,
       date,
-      lat: position.lat,
-      lng: position.lng,
+      lat,
+      lng,
       amount: Number(amount),
       unit,
       notes: notes.trim(),
-      photo,
-    })
+      photo: finalPhoto,
+    }
+
+    if (isEdit) {
+      onUpdate(editRecord.id, data)
+    } else {
+      onSubmit(data)
+    }
+    setLoading(false)
   }
 
   return (
@@ -68,22 +109,18 @@ export default function RecordForm({ position, onSubmit, onClose }) {
     >
       <div className="w-full sm:w-96 bg-gray-800 rounded-t-2xl sm:rounded-2xl shadow-2xl border border-gray-700 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700 sticky top-0 bg-gray-800">
-          <h2 className="font-bold text-yellow-400">사금 발견 기록</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white">
-            <X size={20} />
-          </button>
+          <h2 className="font-bold text-yellow-400">{isEdit ? '기록 수정' : '사금 발견 기록'}</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-white"><X size={20} /></button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
-          {/* 위치 */}
           <div className="bg-gray-700 rounded-lg px-3 py-2 text-xs text-gray-400">
             <span className="text-gray-500">📍 위치</span>
             <span className="ml-2 font-mono text-gray-300">
-              {position.lat.toFixed(5)}, {position.lng.toFixed(5)}
+              {(position?.lat ?? editRecord?.lat).toFixed(5)}, {(position?.lng ?? editRecord?.lng).toFixed(5)}
             </span>
           </div>
 
-          {/* 장소 이름 */}
           <div>
             <label className="block text-xs text-gray-400 mb-1">장소 이름</label>
             <input
@@ -95,7 +132,6 @@ export default function RecordForm({ position, onSubmit, onClose }) {
             />
           </div>
 
-          {/* 날짜 */}
           <div>
             <label className="block text-xs text-gray-400 mb-1">발견 날짜</label>
             <input
@@ -107,7 +143,6 @@ export default function RecordForm({ position, onSubmit, onClose }) {
             />
           </div>
 
-          {/* 채취량 */}
           <div>
             <label className="block text-xs text-gray-400 mb-1">채취량 <span className="text-red-400">*</span></label>
             <div className="flex gap-2">
@@ -132,7 +167,6 @@ export default function RecordForm({ position, onSubmit, onClose }) {
             </div>
           </div>
 
-          {/* 사진 */}
           <div>
             <label className="block text-xs text-gray-400 mb-1">사진</label>
             <input ref={fileRef} type="file" accept="image/*" onChange={handlePhoto} className="hidden" />
@@ -141,7 +175,7 @@ export default function RecordForm({ position, onSubmit, onClose }) {
                 <img src={preview} alt="미리보기" className="w-full h-40 object-cover rounded-lg" />
                 <button
                   type="button"
-                  onClick={() => { setPhoto(null); setPreview(null) }}
+                  onClick={() => { setPhoto(null); setPreview(null); setNewPhotoBase64(null) }}
                   className="absolute top-1 right-1 bg-black/60 rounded-full p-1 text-white hover:bg-black/80"
                 >
                   <X size={14} />
@@ -159,7 +193,6 @@ export default function RecordForm({ position, onSubmit, onClose }) {
             )}
           </div>
 
-          {/* 메모 */}
           <div>
             <label className="block text-xs text-gray-400 mb-1">메모</label>
             <textarea
@@ -176,7 +209,7 @@ export default function RecordForm({ position, onSubmit, onClose }) {
             disabled={loading}
             className="w-full bg-yellow-500 hover:bg-yellow-400 disabled:opacity-50 text-gray-900 font-bold py-2.5 rounded-lg text-sm transition-colors"
           >
-            기록 저장
+            {loading ? '저장 중...' : isEdit ? '수정 완료' : '기록 저장'}
           </button>
         </form>
       </div>
