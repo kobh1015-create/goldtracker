@@ -126,9 +126,8 @@ function RainfallBadge({ mm, lastRainDate }) {
   if (mm == null) return null
 
   // 7일 내 비 없음
-  if (days === null || mm < 10) {
-    return <span className="text-xs text-gray-500">💧 -</span>
-  }
+  if (mm === 0) return <span className="text-xs text-gray-500">💧 0mm</span>
+  if (days === null) return <span className="text-xs text-gray-500">💧 -</span>
   if (days <= 1)  return <span className="text-xs text-orange-400 font-semibold">⚠️ 탁류 {mm}mm</span>
   if (days <= 4)  return <span className="text-xs text-green-400 font-semibold">✅ {days}일 전 {mm}mm</span>
   if (days <= 10) return <span className="text-xs text-blue-300">💧 {days}일 전 {mm}mm</span>
