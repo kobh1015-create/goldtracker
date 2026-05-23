@@ -1,6 +1,6 @@
 import { useMemo, useState, useRef, useCallback } from 'react'
 import { Map, Pickaxe, Waves, GitMerge, Star, PlusCircle, BookOpen,
-         BarChart2, X, LogOut, ChevronRight, ChevronDown, ArrowLeft, Bookmark } from 'lucide-react'
+         BarChart2, X, LogOut, ChevronRight, ChevronDown, ArrowLeft, Bookmark, Navigation2 } from 'lucide-react'
 import GoldMap from './components/Map/GoldMap'
 import RecordForm from './components/RecordForm'
 import RecordList from './components/Sidebar/RecordList'
@@ -92,6 +92,13 @@ function CategoryList({ category, hotspots, flyToSpot, closePanel, wishlist }) {
               )}
               <ChevronRight size={12} className="text-gray-600 shrink-0" />
             </button>
+            <button
+              onClick={() => openKakaoNav(item.lat, item.lng, item.name)}
+              className="px-2.5 flex items-center border-l border-gray-700/60 hover:bg-blue-900/30 transition-colors"
+              title="카카오맵으로 길찾기"
+            >
+              <Navigation2 size={13} className="text-blue-400" />
+            </button>
             {category === 'candidates' && (
               <button
                 onClick={() => wishlist?.toggle(item.key)}
@@ -122,6 +129,12 @@ function daysAgo(dateStr) {
   if (!dateStr) return null
   const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000)
   return diff
+}
+
+// 카카오맵 길찾기 (목적지 설정) URL
+function openKakaoNav(lat, lng, name) {
+  const encoded = encodeURIComponent(name)
+  window.open(`https://map.kakao.com/link/to/${encoded},${lat},${lng}`, '_blank', 'noopener')
 }
 
 function DepthBadge({ depth }) {
@@ -220,6 +233,13 @@ function SidebarContent({ tab, hotspots, records, deleteRecord, editRecord, flyT
                       <div className="h-1 rounded-full" style={{ width: `${h.analysis.total}%`, backgroundColor: color }} />
                     </div>
                   </div>
+                  <button
+                    onClick={() => openKakaoNav(h.lat, h.lng, h.name)}
+                    className="px-2.5 flex items-center border-l border-gray-700/60 hover:bg-blue-900/30 transition-colors"
+                    title="카카오맵으로 길찾기"
+                  >
+                    <Navigation2 size={13} className="text-blue-400" />
+                  </button>
                   <button
                     onClick={() => wishlist.toggle(h.id)}
                     className="px-2.5 flex items-center hover:bg-gray-700/40 transition-colors"
