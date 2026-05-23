@@ -56,7 +56,7 @@ function CategoryList({ category, hotspots, flyToSpot, closePanel, wishlist }) {
     if (category === 'mines')       return MINES.map(m => ({ key: m.id, name: m.name, sub: m.address, detail: m.river, lat: m.lat, lng: m.lng, zoom: 12 }))
     if (category === 'pointBars')   return POINT_BARS.map(p => { const [lat, lng] = centroid(p.coords); return { key: p.id, name: p.name, sub: p.address, detail: p.river, lat, lng, zoom: 13 } })
     if (category === 'confluences') return CONFLUENCES.map(c => ({ key: c.id, name: c.name, sub: c.address, detail: c.rivers.join(' + '), lat: c.lat, lng: c.lng, zoom: 13 }))
-    if (category === 'candidates')  return hotspots.map((h, i) => ({ key: h.id, name: h.name, sub: h.address, detail: `유망도 ${h.analysis.total}점`, lat: h.lat, lng: h.lng, zoom: 13, score: h.analysis.total, rank: i + 1 }))
+    if (category === 'candidates')  return hotspots.map((h, i) => ({ key: h.id, name: h.name, sub: h.address, detail: `유망도 ${h.analysis.total}점`, lat: h.lat, lng: h.lng, zoom: 13, score: h.analysis.total, rank: i + 1, depth: h.depth }))
     return []
   }, [category, hotspots])
 
@@ -78,6 +78,11 @@ function CategoryList({ category, hotspots, flyToSpot, closePanel, wishlist }) {
                 <p className="text-xs font-medium text-white truncate">{item.name}</p>
                 <p className="text-xs text-gray-400 truncate">📍 {item.sub}</p>
                 {item.detail && <p className="text-xs truncate" style={{ color: color ?? '#6b7280' }}>{item.detail}</p>}
+                {item.depth && (
+                  <p className="text-xs text-blue-300 truncate">
+                    💧 수심 {item.depth.min}~{item.depth.max}cm · 적기 {item.depth.season}
+                  </p>
+                )}
               </div>
               {item.score != null && (
                 <span className="text-xs font-bold px-1.5 py-0.5 rounded shrink-0"
@@ -117,6 +122,20 @@ function daysAgo(dateStr) {
   if (!dateStr) return null
   const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000)
   return diff
+}
+
+function DepthBadge({ depth }) {
+  if (!depth) return null
+  const { min, max, season } = depth
+
+  // 저수위 기준 최대값으로 적합도 판정
+  const isDeep    = min > 80
+  const isOptimal = max <= 80
+  const isWarning = !isDeep && !isOptimal // min OK지만 max가 깊을 수 있음
+
+  if (isDeep)    return <span className="text-xs text-red-400"   title={`탐사 적기: ${season}`}>🚫 {min}~{max}cm</span>
+  if (isOptimal) return <span className="text-xs text-green-400" title={`탐사 적기: ${season}`}>💧 {min}~{max}cm</span>
+  return               <span className="text-xs text-blue-300"   title={`탐사 적기: ${season}`}>💧 {min}~{max}cm</span>
 }
 
 function RainfallBadge({ mm, lastRainDate }) {
@@ -190,6 +209,7 @@ function SidebarContent({ tab, hotspots, records, deleteRecord, editRecord, flyT
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-gray-500 w-4 shrink-0">{i + 1}</span>
                       <span className="flex-1 text-xs truncate">{h.name}</span>
+                      <DepthBadge depth={h.depth} />
                       <RainfallBadge mm={rainfall?.[h.id]?.total7d} lastRainDate={rainfall?.[h.id]?.lastRainDate} />
                       <span className="text-xs font-bold px-1.5 py-0.5 rounded shrink-0"
                         style={{ backgroundColor: color + '33', color }}>

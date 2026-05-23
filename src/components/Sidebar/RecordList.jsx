@@ -8,13 +8,22 @@ function fmtMg(mg) {
   return mg >= 1000 ? `${(mg / 1000).toFixed(2)}g` : `${mg.toFixed(1)}mg`
 }
 
+function fmtDepth(cm) {
+  if (cm == null) return null
+  if (cm < 20)   return { text: `${cm}cm`, color: 'text-gray-400',   icon: '💧' }
+  if (cm <= 80)  return { text: `${cm}cm`, color: 'text-green-400',  icon: '✅' }
+  if (cm <= 150) return { text: `${cm}cm`, color: 'text-yellow-400', icon: '⚠️' }
+  return               { text: `${cm}cm`, color: 'text-red-400',    icon: '🚫' }
+}
+
 function exportCSV(records) {
-  const headers = ['이름', '날짜', '채취량', '단위', '위도', '경도', '메모']
+  const headers = ['이름', '날짜', '채취량', '단위', '수심(cm)', '위도', '경도', '메모']
   const rows = records.map(r => [
     r.name ?? '',
     r.date ?? '',
     r.amount ?? '',
     r.unit ?? '',
+    r.depth ?? '',
     r.lat?.toFixed(5) ?? '',
     r.lng?.toFixed(5) ?? '',
     (r.notes ?? '').replace(/,/g, '；'),
@@ -114,7 +123,14 @@ export default function RecordList({ records, onDelete, onEdit }) {
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold text-white truncate">{r.name || '무제 기록'}</p>
                 <p className="text-xs text-gray-400">{dateStr}</p>
-                <p className="text-xs text-yellow-400 font-semibold">{r.amount}{r.unit}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-xs text-yellow-400 font-semibold">{r.amount}{r.unit}</p>
+                  {fmtDepth(r.depth) && (
+                    <span className={`text-xs ${fmtDepth(r.depth).color}`}>
+                      {fmtDepth(r.depth).icon} {fmtDepth(r.depth).text}
+                    </span>
+                  )}
+                </div>
                 {r.notes && <p className="text-xs text-gray-500 truncate italic mt-0.5">"{r.notes}"</p>}
               </div>
               <div className="flex flex-col gap-1.5 shrink-0 self-start mt-0.5">

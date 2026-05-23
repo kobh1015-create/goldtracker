@@ -46,12 +46,23 @@ async function uploadPhoto(base64, recordId) {
 
 const today = () => new Date().toISOString().slice(0, 10)
 
+// 수심 cm 값에 따른 탐사 적합도 판정
+function depthStatus(cm) {
+  if (cm == null || cm === '') return null
+  const n = Number(cm)
+  if (n < 20)  return { label: '너무 얕음', color: 'text-gray-400',   hint: '사금 퇴적 불리' }
+  if (n <= 80) return { label: '탐사 적합', color: 'text-green-400',  hint: '최적 수심' }
+  if (n <= 150) return { label: '깊음 주의', color: 'text-yellow-400', hint: '장비 필요' }
+  return              { label: '탐사 불가', color: 'text-red-400',    hint: '위험 수심' }
+}
+
 export default function RecordForm({ position, onSubmit, onClose, editRecord, onUpdate }) {
   const isEdit = !!editRecord
   const [name, setName]     = useState(editRecord?.name ?? '')
   const [date, setDate]     = useState(editRecord?.date ?? today)
   const [amount, setAmount] = useState(editRecord?.amount?.toString() ?? '')
   const [unit, setUnit]     = useState(editRecord?.unit ?? 'mg')
+  const [depth, setDepth]   = useState(editRecord?.depth?.toString() ?? '')
   const [notes, setNotes]   = useState(editRecord?.notes ?? '')
   const [photo, setPhoto]   = useState(editRecord?.photo ?? null)
   const [preview, setPreview] = useState(editRecord?.photo ?? null)
@@ -89,6 +100,7 @@ export default function RecordForm({ position, onSubmit, onClose, editRecord, on
       lng,
       amount: Number(amount),
       unit,
+      depth: depth !== '' ? Number(depth) : null,
       notes: notes.trim(),
       photo: finalPhoto,
     }
@@ -165,6 +177,33 @@ export default function RecordForm({ position, onSubmit, onClose, editRecord, on
                 <option value="g">g</option>
               </select>
             </div>
+          </div>
+
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">수심 (cm)</label>
+            <div className="flex gap-2 items-center">
+              <input
+                type="number"
+                value={depth}
+                onChange={e => setDepth(e.target.value)}
+                min="0"
+                max="500"
+                step="1"
+                placeholder="예) 45"
+                className="flex-1 bg-gray-700 rounded-lg px-3 py-2 text-sm text-white border border-gray-600 focus:border-yellow-500 focus:outline-none"
+              />
+              <span className="text-xs text-gray-500 shrink-0">cm</span>
+            </div>
+            {(() => {
+              const s = depthStatus(depth)
+              return s ? (
+                <p className={`text-xs mt-1 ${s.color}`}>
+                  {s.label} — {s.hint}
+                </p>
+              ) : (
+                <p className="text-xs mt-1 text-gray-600">현장 실측 수심을 입력하면 다음 방문에 참고할 수 있어요</p>
+              )
+            })()}
           </div>
 
           <div>
