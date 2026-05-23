@@ -26,6 +26,7 @@ export default function AnalysisLayer() {
         mines: MINES,
         pointBars: POINT_BARS,
         confluences: CONFLUENCES,
+        roadAccess: c.roadAccess,
       }),
     }))
   , [])
