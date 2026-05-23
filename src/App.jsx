@@ -256,7 +256,7 @@ function SidebarContent({ tab, hotspots, records, deleteRecord, editRecord, flyT
           </div>
           <div className="p-3 border-t border-gray-700 text-xs text-gray-500 leading-relaxed shrink-0">
             <p className="font-semibold text-gray-400 mb-1">점수 산정 기준</p>
-            <p>폐광산(40) + Point Bar(35) + 합류부(15) + 복합보너스(10)</p>
+            <p>폐광산(35) + Point Bar(30) + 합류부(15) + 차량접근(10) + 복합보너스(10)</p>
           </div>
         </>
       )}
@@ -290,7 +290,7 @@ export default function App() {
 
   const hotspots = useMemo(() =>
     CANDIDATES
-      .map(c => ({ ...c, analysis: scoreLocation(c.lat, c.lng, { mines: MINES, pointBars: POINT_BARS, confluences: CONFLUENCES }) }))
+      .map(c => ({ ...c, analysis: scoreLocation(c.lat, c.lng, { mines: MINES, pointBars: POINT_BARS, confluences: CONFLUENCES, roadAccess: c.roadAccess }) }))
       .sort((a, b) => b.analysis.total - a.analysis.total)
   , [])
 
