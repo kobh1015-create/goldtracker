@@ -30,33 +30,7 @@ export function scoreLocation(lat, lng, { mines, pointBars, confluences, roadAcc
   const breakdown = []
   let total = 0
 
-  // 1. 차량 접근성 (max 10pt) — roadAccess.dist(m) 기준
-  // 300m 이내 포장도로: 만점 / 1500m 초과 or 비포장: 최저
-  if (roadAccess) {
-    let roadScore = 0
-    const { dist, type } = roadAccess
-    if (type === 'paved') {
-      if (dist <= 300)       roadScore = 10
-      else if (dist <= 700)  roadScore = Math.round(10 - (dist - 300) / 400 * 5)   // 10→5
-      else if (dist <= 1500) roadScore = Math.round(5  - (dist - 700) / 800 * 3)   // 5→2
-      else                   roadScore = 1
-    } else {
-      // 비포장: 거리 무관 최대 3점
-      roadScore = dist <= 500 ? 3 : dist <= 1000 ? 2 : 1
-    }
-    roadScore = Math.max(0, roadScore)
-    const distLabel = dist >= 1000 ? `${(dist / 1000).toFixed(1)}km` : `${dist}m`
-    const typeLabel = type === 'paved' ? '포장도로' : '비포장도로'
-    breakdown.push({
-      factor: '차량 접근성',
-      score: roadScore,
-      max: 10,
-      detail: `${typeLabel} ${distLabel}`,
-    })
-    total += roadScore
-  }
-
-  // 2. 폐광산 근접도 (max 35pt)
+  // 1. 폐광산 근접도 (max 35pt)
   // 3km 이내 만점, 15km 밖 0점 — 멀수록 금이 희석되므로 가중치 급감
   let mineScore = 0
   let nearest = { mine: null, dist: Infinity }
@@ -123,6 +97,31 @@ export function scoreLocation(lat, lng, { mines, pointBars, confluences, roadAcc
       detail: `${nearestConf.conf.name} (${nearestConf.dist.toFixed(1)}km)`,
     })
     total += confScore
+  }
+
+  // 4. 차량 접근성 (max 10pt) — roadAccess.dist(m) 기준
+  // 300m 이내 포장도로: 만점 / 1500m 초과 or 비포장: 최저
+  if (roadAccess) {
+    let roadScore = 0
+    const { dist, type } = roadAccess
+    if (type === 'paved') {
+      if (dist <= 300)       roadScore = 10
+      else if (dist <= 700)  roadScore = Math.round(10 - (dist - 300) / 400 * 5)
+      else if (dist <= 1500) roadScore = Math.round(5  - (dist - 700) / 800 * 3)
+      else                   roadScore = 1
+    } else {
+      roadScore = dist <= 500 ? 3 : dist <= 1000 ? 2 : 1
+    }
+    roadScore = Math.max(0, roadScore)
+    const distLabel = dist >= 1000 ? `${(dist / 1000).toFixed(1)}km` : `${dist}m`
+    const typeLabel = type === 'paved' ? '포장도로' : '비포장도로'
+    breakdown.push({
+      factor: '차량 접근성',
+      score: roadScore,
+      max: 10,
+      detail: `${typeLabel} ${distLabel}`,
+    })
+    total += roadScore
   }
 
   // 5. 복수 요인 보너스 (max 10pt)
